@@ -11,6 +11,13 @@ class CreateApplicantSerializer(serializers.ModelSerializer):
                   "src"]
 
 
+class UploadFileApplicantSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Applicant
+        read_only_fields = ["created_at", "name", "first_choice",]
+        fields = [ "video_link", "created_at", "name", "first_choice",]
+
+
 class ApplicantSerializer(serializers.ModelSerializer):
     class Meta:
         model = Applicant

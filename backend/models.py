@@ -1,4 +1,5 @@
 from django.db import models
+import uuid
 
 # Create your models here.
 class Applicant(models.Model):
@@ -48,7 +49,7 @@ class Applicant(models.Model):
         ("WRITTEN_TEST_REVEIVED", "收到笔试"),
         ("EXPIRED", "已过期"),
     ]
-    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     
     name = models.CharField(max_length=10, verbose_name="姓名", blank=False)
     email = models.EmailField(max_length=30, verbose_name="邮箱", blank=False)
@@ -67,6 +68,11 @@ class Applicant(models.Model):
     src = models.CharField(max_length=30, verbose_name="来源", blank=True, null=True)
     
     application_status = models.CharField(max_length=25, choices=APPLICATION_STATUS, verbose_name="申请状态", blank=True, default="NEW_APPLICATION")
+    video_link = models.URLField(verbose_name="试讲视频链接", blank=True, null=True)
+    
+    
+    remark = models.TextField(verbose_name="备注", blank=True, null=True)
+    
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     
     class Meta:
