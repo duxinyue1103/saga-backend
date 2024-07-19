@@ -49,6 +49,12 @@ class Applicant(models.Model):
         ("WRITTEN_TEST_REVEIVED", "收到笔试"),
         ("EXPIRED", "已过期"),
     ]
+    
+    def user_directory_path(instance, filename):
+        # file will be uploaded to MEDIA_ROOT/user_<id>/<filename>
+        return f"writing_test/user_{instance.id}/{filename}"
+
+    
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     
     name = models.CharField(max_length=10, verbose_name="姓名", blank=False)
@@ -68,6 +74,7 @@ class Applicant(models.Model):
     src = models.CharField(max_length=30, verbose_name="来源", blank=True, null=True)
     
     application_status = models.CharField(max_length=25, choices=APPLICATION_STATUS, verbose_name="申请状态", blank=True, default="NEW_APPLICATION")
+    writing_test_file = models.FileField(upload_to=user_directory_path,  verbose_name="笔试文件", blank=True, null=True, )
     video_link = models.URLField(verbose_name="试讲视频链接", blank=True, null=True)
     
     

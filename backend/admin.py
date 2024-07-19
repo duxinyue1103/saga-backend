@@ -5,7 +5,7 @@ from .models import Applicant
 
 class ApplicantAdmin(admin.ModelAdmin):
     search_fields = ('name', 'email', 'phone', 'school', 'major', 'grade', 'first_choice', 'second_choice', 'application_status')
-    list_display = ('name', 'application_status', 'email', 'phone', 'school', 'major', 'grade', 'first_choice', 'second_choice')
+    list_display = ('id', 'name', 'application_status', 'email', 'phone', 'school', 'major', 'grade', 'first_choice', 'second_choice')
 
     
 admin.site.register(Applicant, ApplicantAdmin)

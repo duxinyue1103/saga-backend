@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from .models import Applicant
-from .serializers import UploadFileApplicantSerializer, CreateApplicantSerializer, ApplicantSerializer
+from .serializers import UploadWritingTestApplicantSerializer, CreateApplicantSerializer, ApplicantSerializer, WritingTestFileSerializer
 
 from rest_framework import status
 from rest_framework.decorators import api_view
@@ -23,19 +23,36 @@ def applicant_submit(request, pk, format=None):
         return Response(status=status.HTTP_404_NOT_FOUND)
     
     if request.method == "GET":
-        serializer = UploadFileApplicantSerializer(applicant)
+        serializer = UploadWritingTestApplicantSerializer(applicant)
         return Response(serializer.data)
     
     elif request.method == "PUT":
-        serializer = UploadFileApplicantSerializer(applicant, data=request.data)
+        serializer = UploadWritingTestApplicantSerializer(applicant, data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
-@api_view(["GET"])
-def applicant_list(request, format=None):
-    if request.method == "GET":
-        applicants = Applicant.objects.all()
-        serializer = ApplicantSerializer(applicants, many=True)
-        return Response(serializer.data)
+    
+@api_view(["PUT", "DELETE"])
+def file_detail(request, pk, format=None):
+    try:
+        applicant = Applicant.objects.get(pk=pk)
+    except Applicant.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+    
+    if request.method == "PUT":
+        serializer = WritingTestFileSerializer(applicant, data=request.data)
+        if request.data.get("writing_test_file").size > 1024 * 1024 * 10:
+            return Response("File size too large", status=status.HTTP_400_BAD_REQUEST)
+        elif request.data.get("writing_test_file").content_type != "application/pdf":
+            return Response("File type not supported", status=status.HTTP_400_BAD_REQUEST)
+        
+        if serializer.is_valid():
+            serializer.save()
+            return Response(request.data.get("writing_test_file").name, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    elif request.method == "DELETE":
+        applicant.writing_test_file.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
