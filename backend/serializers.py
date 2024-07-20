@@ -8,7 +8,10 @@ class CreateApplicantSerializer(serializers.ModelSerializer):
                   "major", "grade", "sex", "wechat",
                   "first_choice", "second_choice", "third_choice",
                   "preferred_subject", "self_intro", "disposable_time",
-                  "src"]
+                  "src", "created_at", "id"]
+        
+        read_only_fields = ["created_at", "id"]
+        
 
 
 class UploadWritingTestApplicantSerializer(serializers.ModelSerializer):
