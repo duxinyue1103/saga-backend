@@ -14,7 +14,8 @@ def applicant_create(request, format=None):
         if serializer.is_valid():
             instance = serializer.save()
             new_application = ApplicationStatus(applicant=instance, handle_by=instance.first_choice)
-            new_application.save()            
+            new_application.save()
+            new_application.send_writing_task_email()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

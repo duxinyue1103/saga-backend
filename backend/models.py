@@ -1,6 +1,7 @@
 from datetime import timedelta, datetime
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
+from .email import send_email_with_no_reply, compose_writing_task_email
 import uuid
 
 
@@ -89,8 +90,9 @@ class ApplicationStatus(models.Model):
         ("INTERVIEW_PENDING", "等待面试"),
         ("INTERVIEW_EMAIL_SENT", "面试邮件已发送"),
         ("PENDING", "面试结束, 待确认"),
-        ("INTERNAL_ACCEPTED", "内部决定录取"),
-        ("INTERNAL_REJECTED", "内部决定拒绝"),
+        ("SEND_TO_OTHER_DEPT", "转去其他部门"),
+        ("INTERNAL_ACCEPTED", "决定录取"),
+        ("INTERNAL_REJECTED", "决定拒绝"),
         ("ACCEPTED", "已发送录取通知"),
         ("REJECTED", "已发送拒绝通知"),
         ("EXPIRED", "已过期"),
@@ -116,7 +118,7 @@ class ApplicationStatus(models.Model):
     writing_task_video_link = models.URLField(verbose_name="试讲视频链接", blank=True, null=True)
     
     interview_time = models.DateTimeField(verbose_name="面试时间", blank=True, null=True)
-    interview_person = models.ForeignKey("Interviewer", on_delete=models.SET_NULL, verbose_name="主面试官", blank=True, null=True)
+    interviewer = models.ForeignKey("Interviewer", on_delete=models.SET_NULL, verbose_name="主面试官", blank=True, null=True)
     
     writiing_task_score = models.FloatField(validators=[MinValueValidator(0.0), MaxValueValidator(100.0)], verbose_name="笔试总分", blank=True, null=True)
     interview_score = models.FloatField(validators=[MinValueValidator(0.0), MaxValueValidator(100.0)], verbose_name="面试总分", blank=True, null=True)
@@ -136,6 +138,33 @@ class ApplicationStatus(models.Model):
     
     def __str__(self):
         return f"{self.applicant.name} - {getDeptName(self.handle_by)}"
+    
+    def send_writing_task_email(self):
+        if self.status != "NEW_APPLICATION":
+            return False
+        res = send_email_with_no_reply(self.applicant.email, "SAGA星光·第五期 -- 笔试邀请",
+                                 compose_writing_task_email(self.applicant.id, self.applicant.name,
+                                                            self.handle_by, self.writing_task_ddl))
+        if res:
+            self.status = "WRTIING_TASK_EMAIL_SENT"
+            self.save()
+            return True
+        return False
+
+    def send_interview_email(self):
+        if self.status != "INTERVIEW_PENDING":
+            return False
+        print(f"send email to interview: {self.applicant.email}")
+        return True
+    
+    def send_decision_email(self):
+        if self.status not in ["INTERNAL_ACCEPTED", "INTERNAL_REJECTED"]:
+            return False
+        if self.status == "INTERNAL_ACCEPTED":
+            print(f"send email to accept: {self.applicant.email}")
+        else:
+            print(f"send email to reject: {self.applicant.email}")
+        return True
     
 class Interviewer(models.Model):
     global DEPARTMENTS
