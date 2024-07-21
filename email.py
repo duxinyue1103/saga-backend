@@ -299,7 +299,7 @@ def compose_email(id, name, dept, date):
                       </tr>
                     </tbody>
                   </table>
-                  <p>如果您对以上安排有任何疑问或要求，请您尽快通过邮箱或微信与我们联络，我们将与您做进一步交流。<br><span class="des-post">人事部邮箱：</span><span class="highlight-thin">human-resources@saga-xingguang.com</span><br><span class="des-post">人事部微信：</span><span class="highlight-thin">human-resources@saga-xingguang.com</span><br><span class="highlight-thin">chillywinterrrrr；FJLL-YZS</span></p>
+                  <p>如果您对以上安排有任何疑问或要求，请您尽快通过邮箱或微信与我们联络，我们将与您做进一步交流。<br><span class="des-post">人事部邮箱：</span><span class="highlight-thin">human-resources@saga-xingguang.com</span><br><span class="des-post">人事部微信：</span><span class="highlight-thin">chillywinterrrrr；FJLL-YZS</span></p>
                   <div class="signature-thin">
                     <p>顺颂，</p>
                     <p>夏祺</p>
