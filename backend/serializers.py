@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Applicant
+from .models import Applicant, ApplicationStatus
 
 class CreateApplicantSerializer(serializers.ModelSerializer):
     class Meta:
@@ -8,22 +8,29 @@ class CreateApplicantSerializer(serializers.ModelSerializer):
                   "major", "grade", "sex", "wechat",
                   "first_choice", "second_choice", "third_choice",
                   "preferred_subject", "self_intro", "disposable_time",
-                  "src", "created_at", "id"]
-        
-        read_only_fields = ["created_at", "id"]
-        
+                  "src",]        
 
 
-class UploadWritingTestApplicantSerializer(serializers.ModelSerializer):
+class WritingTaskStatusSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ApplicationStatus
+        read_only_fields = ["handle_by", "writing_task_ddl",]
+        fields = ["handle_by", "writing_task_ddl", "writing_task_file", "writing_task_video_link"]
+        
+        
+class WritingTaskSerializer(serializers.ModelSerializer):
+    applications = serializers.SerializerMethodField()
+    
+    def get_applications(self, applicant):
+        from django.db.models import Q
+        
+        queryset = applicant.applications.filter(Q(status="NEW_APPLICATION") | Q(status="WRTIING_TASK_EMAIL_SENT"))
+        serializer = WritingTaskStatusSerializer(queryset, many=True)
+        return serializer.data
+    
     class Meta:
         model = Applicant
-        read_only_fields = ["created_at", "name", "first_choice", "writing_test_file"]
-        fields = [ "video_link", "created_at", "name", "first_choice", "writing_test_file"]
-
-class WritingTestFileSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Applicant
-        fields = ["writing_test_file"]
+        fields = ["name", "applications"]
 
 
 class ApplicantSerializer(serializers.ModelSerializer):

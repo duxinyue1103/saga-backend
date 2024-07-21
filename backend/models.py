@@ -1,8 +1,31 @@
+from datetime import timedelta, datetime
+from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 import uuid
 
+
+DEPARTMENTS = [
+    ("TUT", "教学部"),
+    ("CM", "行研部"),
+    ("IT", "IT部"),
+    ("HR", "人事部"),
+    ("PR", "宣传部"),
+    ("FIN", "财务部"),
+    ("LAW", "法务部"),
+    ("LIA", "外联部"),
+    ("PRE", "主席团")
+]
+
+def getDeptName(code):
+    global DEPARTMENTS
+    for choice in DEPARTMENTS:
+        if choice[0] == code:
+            return choice[1]
+    return "未知"
+
 # Create your models here.
 class Applicant(models.Model):
+    global DEPARTMENTS
     
     YEAR_IN_SCHOOL_CHOICES = [
         ("UG1", "大一"),
@@ -13,17 +36,6 @@ class Applicant(models.Model):
         ("PG", "硕/博士生"),
         ("PGGRAD", "硕/博士毕业"),
         ("OTHER", "其他"),
-    ]
-    
-    DEPARTMENTS = [
-        ("TUT", "教学部"),
-        ("CM", "行研部"),
-        ("IT", "IT部"),
-        ("HR", "人事部"),
-        ("PR", "宣传部"),
-        ("FIN", "财务部"),
-        ("LAW", "法务部"),
-        ("LIA", "外联部"),
     ]
     
     SUBJECTS = [
@@ -37,23 +49,6 @@ class Applicant(models.Model):
         ("F", "女"),
         ("O", "其他"),
     ]
-    
-    APPLICATION_STATUS = [
-        ("INTERVIEW_PENDING", "等待面试"),
-        ("PENDING", "待确认"),
-        ("INTERNAL_ACCEPTED", "内部决定录取"),
-        ("INTERNAL_REJECTED", "内部决定拒绝"),
-        ("ACCEPTED", "已发送录取通知"),
-        ("REJECTED", "已发送拒绝通知"),
-        ("NEW_APPLICATION", "新申请"),
-        ("WRITTEN_TEST_REVEIVED", "收到笔试"),
-        ("EXPIRED", "已过期"),
-    ]
-    
-    def user_directory_path(instance, filename):
-        # file will be uploaded to MEDIA_ROOT/user_<id>/<filename>
-        return f"writing_test/user_{instance.id}/{filename}"
-
     
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     
@@ -73,33 +68,89 @@ class Applicant(models.Model):
     disposable_time = models.IntegerField(choices=[(i, i) for i in range(1, 6)], blank=False, verbose_name="每周可投入小时")
     src = models.CharField(max_length=30, verbose_name="来源", blank=True, null=True)
     
-    application_status = models.CharField(max_length=25, choices=APPLICATION_STATUS, verbose_name="申请状态", blank=True, default="NEW_APPLICATION")
-    writing_test_file = models.FileField(upload_to=user_directory_path,  verbose_name="笔试文件", blank=True, null=True, )
-    video_link = models.URLField(verbose_name="试讲视频链接", blank=True, null=True)
-    
-    
-    remark = models.TextField(verbose_name="备注", blank=True, null=True)
-    
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
-    
+    modified_at = models.DateTimeField(auto_now=True, editable=False)
+        
     class Meta:
         verbose_name = "申请者"
         verbose_name_plural = "申请者"
         db_table = "申请人表"
         ordering = ["created_at"]
         
-    def __getDeptName(self):
-        for choice in self.DEPARTMENTS:
-            if choice[0] == self.first_choice:
-                return choice[1]
-        return "未知"
-    
-    def __getApplicantStatus(self):
-        for choice in self.APPLICATION_STATUS:
-            if choice[0] == self.application_status:
-                return choice[1]
-        return "未知"
-        
     def __str__(self):
-        return f"{self.name} - {self.__getDeptName()} - {self.__getApplicantStatus()}"
+        return self.name
     
+class ApplicationStatus(models.Model):
+    global DEPARTMENTS
+
+    APPLICATION_STATUS = [
+        ("NEW_APPLICATION", "新申请"),
+        ("WRTIING_TASK_EMAIL_SENT", "笔试邮件已发送"),
+        ("INTERVIEW_PENDING", "等待面试"),
+        ("INTERVIEW_EMAIL_SENT", "面试邮件已发送"),
+        ("PENDING", "面试结束, 待确认"),
+        ("INTERNAL_ACCEPTED", "内部决定录取"),
+        ("INTERNAL_REJECTED", "内部决定拒绝"),
+        ("ACCEPTED", "已发送录取通知"),
+        ("REJECTED", "已发送拒绝通知"),
+        ("EXPIRED", "已过期"),
+    ]
+    
+    def user_directory_path(instance, filename):
+        # file will be uploaded to MEDIA_ROOT/user_<id>/<filename>
+        return f"writing_test/user_{instance.applicant.id}/{instance.handle_by}-{filename}"
+    
+    def calculate_ddl():
+        ddl_datetime = datetime.now() + timedelta(days=7)
+        return ddl_datetime.replace(hour=23, minute=59, second=59, microsecond=0)
+    
+    id = models.AutoField(primary_key=True)
+    
+    applicant = models.ForeignKey("Applicant", on_delete=models.CASCADE, related_name="applications", verbose_name="申请人", blank=False)
+    
+    status = models.CharField(max_length=25, choices=APPLICATION_STATUS, verbose_name="申请状态", default="NEW_APPLICATION")
+    handle_by = models.CharField(max_length=3, choices=DEPARTMENTS, verbose_name="处理部门", blank=False)
+        
+    writing_task_ddl = models.DateTimeField(verbose_name="笔试截止时间", default=calculate_ddl, blank=False)
+    writing_task_file = models.FileField(upload_to=user_directory_path,  verbose_name="笔试文件", blank=True, null=True, )
+    writing_task_video_link = models.URLField(verbose_name="试讲视频链接", blank=True, null=True)
+    
+    interview_time = models.DateTimeField(verbose_name="面试时间", blank=True, null=True)
+    interview_person = models.ForeignKey("Interviewer", on_delete=models.SET_NULL, verbose_name="主面试官", blank=True, null=True)
+    
+    writiing_task_score = models.FloatField(validators=[MinValueValidator(0.0), MaxValueValidator(100.0)], verbose_name="笔试总分", blank=True, null=True)
+    interview_score = models.FloatField(validators=[MinValueValidator(0.0), MaxValueValidator(100.0)], verbose_name="面试总分", blank=True, null=True)
+
+    writing_task_comment = models.TextField(verbose_name="笔试备注", blank=True, null=True)
+    interview_comment = models.TextField(verbose_name="面试备注", blank=True, null=True)
+    
+    created_at = models.DateTimeField(auto_now_add=True, editable=False)
+    modified_at = models.DateTimeField(auto_now=True, editable=False)
+    
+    class Meta:
+        verbose_name = "申请状态"
+        verbose_name_plural = "申请状态"
+        db_table = "申请状态表"
+        ordering = ["created_at"]
+        unique_together = ["applicant", "handle_by"]
+    
+    def __str__(self):
+        return f"{self.applicant.name} - {getDeptName(self.handle_by)}"
+    
+class Interviewer(models.Model):
+    global DEPARTMENTS
+    
+    id = models.AutoField(primary_key=True)
+    
+    name = models.CharField(max_length=10, verbose_name="姓名", blank=False)
+    department = models.CharField(max_length=3, choices=DEPARTMENTS, verbose_name="部门", blank=False)
+    meeting_link = models.URLField(verbose_name="面试链接", blank=False)
+    
+    class Meta:
+        verbose_name = "面试官"
+        verbose_name_plural = "面试官"
+        db_table = "面试官表"
+        ordering = ["department"]
+    
+    def __str__(self):
+        return f"{self.name} - {getDeptName(self.department)}"
