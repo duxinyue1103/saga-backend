@@ -379,8 +379,11 @@ def send_email_with_no_reply(to, subject, content) -> bool:
         html_part = MIMEText(content, "html", "utf-8")
         msg.attach(html_part)
 
-        server.sendmail(sender, to, msg.as_string())
+        errs = server.sendmail(sender, to, msg.as_string())
         server.quit()
+        if errs:
+            print(errs)
+            return False
         return True
         
     except Exception as e:
@@ -388,7 +391,7 @@ def send_email_with_no_reply(to, subject, content) -> bool:
         return False
 
 # 面试邀请  
-def compose_interview_email(id, name, dept, ddl):
+def compose_interview_email(id, name, dept, time,link):
     content = f"""
   <html>
   <head>
@@ -500,16 +503,16 @@ def compose_interview_email(id, name, dept, ddl):
       margin: 0;
       margin-bottom: 16px;
     }}
-    a:link{{	/*默认状态*/
+    a:link{{	
       color: #dcac0f;
     }}
-    a:visited{{/*浏览过的*/
+    a:visited{{
       color:rgb(255,167,27);
     }}
-    a:hover{{/*悬浮状态*/
+    a:hover{{
       color:rgb(255,195,33);
     }}
-    a:active{{/*激活过的*/
+    a:active{{
       color:rgb(255,141,27);
     }}
     .namestyle{{      font-style: italic;
@@ -603,8 +606,6 @@ def compose_interview_email(id, name, dept, ddl):
     .pic-QR img {{      
         width: 50%;
     }}
-
-   
     </style>
   </head>
   <body>
@@ -629,9 +630,9 @@ def compose_interview_email(id, name, dept, ddl):
                   <p>感谢您对志行会SAGA星光线上课堂项目的支持！经{code_to_dept[dept]}评估，您顺利通过笔试。我们诚挚地邀请您参加SAGA星光项目组的面试，以增进彼此了解。</p>
                   <p>以下是面试的详细信息：</p> 
                   <ul>
-                    <li>面试时间：<span class="highlight">{interview_time}</span></li>
+                    <li>面试时间：<span class="highlight">{time}</span></li>
                     <li>面试平台：腾讯会议</li>
-                    <li>会议链接：<span class="highlight">{interview_link}</span></li>
+                    <li>会议链接：<span class="highlight">{link}</span></li>
                     <li>面试时长：30-60分钟</li>
                     <li>面试语言：中文</li>
                     <li>服装要求：得体大方</li>                  
@@ -689,9 +690,8 @@ def compose_interview_email(id, name, dept, ddl):
               <table role="presentation" border="0" cellpadding="0" cellspacing="0">
                 <tr>
                   <td class="content-block">
-                    <span class="apple-link">微信公众号：星光SAGA</span>
+                    <span style="font-weight: bold;">SAGA·星光</span>
                     <br>
-                    
                   </td>
                 </tr>
                 <tr>
@@ -732,8 +732,11 @@ def send_interview_email_with_support(to, subject, content) -> bool:
         html_part = MIMEText(content, "html", "utf-8")
         msg.attach(html_part)
 
-        server.sendmail(sender, to, msg.as_string())
+        errs = server.sendmail(sender, to, msg.as_string())
         server.quit()
+        if errs:
+            print(errs)
+            return False
         return True
         
     except Exception as e:
@@ -741,7 +744,7 @@ def send_interview_email_with_support(to, subject, content) -> bool:
         return False
 
 # 发送offer
-def compose_offer_email(id, name, dept, offer_reply_ddl):
+def compose_accept_email(id, name, dept, offer_reply_ddl):
     eng=dept_to_eng.get(dept)
     content = f"""
 <html>
@@ -749,11 +752,6 @@ def compose_offer_email(id, name, dept, offer_reply_ddl):
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <title>Simple Transactional Email</title>
-    <script>
-        function jumpToImage() {{
-            window.location.href = "群聊二维码链接";
-        }}
-    </script>
     <style media="all" type="text/css">
     /* -------------------------------------
     GLOBAL RESETS
@@ -974,8 +972,6 @@ def compose_offer_email(id, name, dept, offer_reply_ddl):
         <td>&nbsp;</td>
         <td class="container">
           <div class="content">
-
-            <!-- START CENTERED WHITE CONTAINER -->
             <span class="preheader">SAGA星光·第五期 - 录取通知</span>
             <table role="presentation" border="0" cellpadding="0" cellspacing="0" class="main">
 
@@ -987,7 +983,7 @@ def compose_offer_email(id, name, dept, offer_reply_ddl):
                   <p>感谢您参加志行会星光线上课堂项目组的招募，鉴于您对公益的热情与您在面试中出众的表现，星光项目组诚挚邀请您成为我们的一员，与所有BTPer一起为我们共同的公益梦想努力。</p> 
                   
                   <p>您的具体职位是<span style="font-weight: bold;">{code_to_dept[dept]}成员</span>。</p>
-                  <p>请扫描<a onclick="jumpToImage()";>此链接</a>中的二维码，加入到SAGA的飞书团队及微信群，SAGA所有数据都储存在飞书内，主要工作也将在飞书开展，<span class="highlight">请务必保证加入以免消息遗漏</span>。</p>
+                  <p>请扫描<a href="https://lcny1jsoyn29.feishu.cn/wiki/E0BmwziX0inqrPkrjjYc5JvjnXc";>此链接</a>中的二维码，加入到SAGA的飞书团队及微信群，SAGA所有数据都储存在飞书内，主要工作也将在飞书开展，<span class="highlight">请务必保证加入以免消息遗漏</span>。</p>
     
                   <table role="presentation" border="0" cellpadding="0" cellspacing="0" class="btn btn-primary" >
                     <tbody>
@@ -1015,7 +1011,7 @@ def compose_offer_email(id, name, dept, offer_reply_ddl):
                   <p>Thank you for participating in the recruitment of BTP-SAGA. Due to your enthusiasm for public welfare and outstanding performance during the interview, we are glad to offer you as a member of BTP-SAGA. We hope that you can strive after our mutual public welfare dreams with all BTPers!</p>
                   <p>Your position is a member of <span style="font-weight: bold;">{code_to_dept[dept]} Department</p> 
                   
-                  <p>Please scan the <a onclick="jumpToImage()";>QR codes</a> to enter our Lark Team and WeChat group. All documents of BTP-SAGA are saved in Lark for your reference, and we will carry out our main tasks through it as well. Please join them once you decide to accept the offer. </p>
+                  <p>Please scan the <a href="https://lcny1jsoyn29.feishu.cn/wiki/E0BmwziX0inqrPkrjjYc5JvjnXc">QR codes</a> to enter our Lark Team and WeChat group. All documents of BTP-SAGA are saved in Lark for your reference, and we will carry out our main tasks through it as well. Please join them once you decide to accept the offer. </p>
                   <p>Please reply to this email as soon as possible to confirm your acceptanc. After you accept the offer, we will notify you through Lark for further arrangement. Kindly note that if we do not receive your reply before <span class="highlight-thin">{offer_reply_ddl}</span>, we will assume that you have automatically given up the position.</p>
 
                   <table role="presentation" border="0" cellpadding="0" cellspacing="0" class="btn btn-primary" >
@@ -1086,8 +1082,11 @@ def send_offer_email_with_hr(to, subject, content) -> bool:
         html_part = MIMEText(content, "html", "utf-8")
         msg.attach(html_part)
 
-        server.sendmail(sender, to, msg.as_string())
+        errs = server.sendmail(sender, to, msg.as_string())
         server.quit()
+        if errs:
+            print(errs)
+            return False
         return True
         
     except Exception as e:
@@ -1421,8 +1420,11 @@ def send_reject_email_with_hr(to, subject, content) -> bool:
         html_part = MIMEText(content, "html", "utf-8")
         msg.attach(html_part)
 
-        server.sendmail(sender, to, msg.as_string())
+        errs = server.sendmail(sender, to, msg.as_string())
         server.quit()
+        if errs:
+            print(errs)
+            return False
         return True
         
     except Exception as e:
